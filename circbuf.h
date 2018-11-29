@@ -1,7 +1,7 @@
 #ifndef _CIRCBUF_H
 #define _CIRCBUF_H
 
-#include "my_defs.h"
+#include "globdefs.h"
 
 
 /* Opaque buffer element type.  This would be defined by the application. */

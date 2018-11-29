@@ -3,12 +3,12 @@ CC = gcc
 
 
 
-CFLAGS = -o0 -ggdb3 ${CMP_OPTS} -DTEST_NMEA_TIME
+CFLAGS = -o0 -ggdb3 ${CMP_OPTS}
 ###CFLAGS = -oS
 LDFLAG = -D_REENTERANT -lgps -lpthread 
 
-OBJS = circbuf.o log.o nmea.o proto.o rtc.o sender.o start.o utils.o mythreads.o
-C_FILES = circbuf.c log.c nmea.c proto.c rtc.o sender.c start.c time.o utils.c mythreads.c
+OBJS = circbuf.o log.o nmea.o proto.o sender.o start.o utils.o mythreads.o
+C_FILES = circbuf.c log.c nmea.c proto.c sender.c start.c utils.c mythreads.c
 
 TMPFILES =  *.c~ *.h~
 

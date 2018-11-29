@@ -13,7 +13,7 @@
 #include "proto.h"
 #include "mythreads.h"
 #include "utils.h"
-#include "my_defs.h"
+#include "globdefs.h"
 #include "my_cmd.h"
 #include "log.h"
 
@@ -42,6 +42,7 @@ static pthread_mutex_t cs;
 
 static void data_port_reset(void);
 static bool data_port_read_any_data(void *, int);
+static bool data_port_read_data_until_timeout(void *, int);
 static bool data_port_send_some_command(u8, void *, int);
 
 
@@ -181,7 +182,7 @@ static int data_port_read(u8 *buf, int len)
 	    maxfd = CommPort + 1;	/* maximum bit entry (fd) to test */
 
 	    timeout.tv_sec = 0;	//секунды
-	    timeout.tv_usec = 25000;	// микросекунды
+	    timeout.tv_usec = 2000;	// микросекунды
 	    res = select(maxfd, &readfs, NULL, NULL, &timeout);
 
 	    if (FD_ISSET(CommPort, &readfs)) {
@@ -214,6 +215,35 @@ static int data_port_read(u8 *buf, int len)
     return ind;
 }
 
+// Чтение из порта ДО таймаута в мс
+static int data_port_read_until_timeout(u8 *buf, int t)
+{
+    int num, res;
+    fd_set readfs;		/* file descriptor set */
+    int maxfd;			/* maximum file desciptor used */
+    struct timeval timeout;
+
+    FD_SET(CommPort, &readfs);	/* set testing for source 1 */
+    maxfd = CommPort + 1;	/* maximum bit entry (fd) to test */
+
+    timeout.tv_sec = 0;		//секунды
+    timeout.tv_usec = t * 1000;	// микросекунды
+
+    res = select(maxfd, &readfs, NULL, NULL, &timeout);
+
+
+    log_write_log_file("dddddddddddddddddd");
+    if (FD_ISSET(CommPort, &readfs)) {
+	num = read(CommPort, buf, 1285);
+	my_count.rx_pack++;	//принято
+    } else {			// Все принятые пакеты
+	my_count.rx_cmd_err++;	//принято
+	data_port_reset();
+	return -1;		// Нет связи
+    }
+
+    return num;
+}
 
 ////////////////////////////////////////////////////////////////////////////////
 // Видны в других файлах
@@ -271,6 +301,34 @@ static bool data_port_read_any_data(void *v, int len)
 }
 
 
+/**
+ * Получить ответ из порта
+ */
+bool data_port_read_data_until_timeout(void *data, int time)
+{
+    int num;
+    bool res = false;
+
+    do {
+	if (time == 0 || data == NULL)
+	    break;
+
+	// Ждем ответа
+	num = data_port_read_data_until_timeout((u8 *) data, time);
+	if (num <= 0) {
+	    break;
+	}
+
+	if (test_crc16((u8 *) data, num)) {
+	    break;
+	} else {
+	    res = true;
+	}
+
+    } while (0);
+
+    return res;
+}
 
 /**
  * Послать любую команду. Оформить data по протоколу
@@ -599,6 +657,34 @@ int GetConst(void *in)
     return res;
 }
 
+//---------------------------------------------------------------------------
+// Записать контсанты всех каналов
+// В критическую секцию - 2 раза, т.к. у нас есть ожидание
+// Пусть другие процессы не ждут
+int SetConst(void *in)
+{
+    int res = -1;
+    u8 buf[2048];
+    ADS1282_Regs *regs;
+
+    if (in == NULL)
+	return res;
+
+    regs = (ADS1282_Regs *) in;
+
+    EnterCriticalSection(&cs);
+    do {
+	if (data_port_send_some_command(UART_CMD_SET_ADC_CONST, (u8 *) regs, sizeof(ADS1282_Regs)) == false) {
+	    break;
+	}
+	// Ждем ответа-короткий статус с ожыданием!Читаем 5 байт статуса
+	if (data_port_read_data_until_timeout(buf, 1000) == true) {
+	    res = 0;
+	}
+    } while (0);
+    LeaveCriticalSection(&cs);
+    return res;
+}
 
 //---------------------------------------------------------------------------
 // Начать штатные измерения ускорения

@@ -1,7 +1,7 @@
 #ifndef ProtoH
 #define ProtoH
 
-#include "my_defs.h"
+#include "globdefs.h"
 
 
 /**

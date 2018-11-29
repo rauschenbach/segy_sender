@@ -1,7 +1,7 @@
 #ifndef _COM_CMD_H
 #define _COM_CMD_H
 
-#include "my_defs.h"
+#include "globdefs.h"
 
 
 #ifndef _WIN32			/* Embedded platform */

@@ -7,8 +7,6 @@
 #include "utils.h"
 #include "log.h"
 
-#define BAUD_RATE	115200
-
 static char dev[32];
 static char name[32];
 
@@ -42,14 +40,14 @@ int main(int argc, char *argv[])
     // Имя COM порта
     strncpy(dev, argv[1], sizeof(dev));
     start_param_struct.adc_data_rate = atoi(argv[2]);	// adc rate
-    if (start_param_struct.adc_data_rate != 250) {
-	printf("ERROR: ADC sample rate has to be 250 only!\n");
-	start_param_struct.adc_data_rate = 250;
+    if (start_param_struct.adc_data_rate != 250 && start_param_struct.adc_data_rate != 2000) {
+	printf("ERROR: ADC sample rate has to be 250 or 2000\n");
+	return -1;
     }
     
-    start_param_struct.test_buf_size = 8;
-    start_param_struct.net_port_num = 1026;
-    start_param_struct.log_file_sym = 'B';
+    start_param_struct.test_buf_size = (start_param_struct.adc_data_rate == 2000)? 50 : 8;
+    start_param_struct.net_port_num = (start_param_struct.adc_data_rate == 2000)?  1025 : 1026;
+    start_param_struct.log_file_sym = (start_param_struct.adc_data_rate == 2000)? 'A' : 'B';
     
 
     strncpy(start_param_struct.station_name, argv[3], sizeof(start_param_struct.station_name));
@@ -61,7 +59,7 @@ int main(int argc, char *argv[])
     }
 
 
-    if (data_port_init(dev, BAUD_RATE) == false) {
+    if (data_port_init(dev, 460800) == false) {
 	exit(-1);
     }
 

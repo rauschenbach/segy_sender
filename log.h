@@ -2,7 +2,7 @@
 #define _LOG_H
 
 #include "proto.h"
-#include "my_defs.h"
+#include "globdefs.h"
 
 /*
 int  log_create_work_dir(s32);

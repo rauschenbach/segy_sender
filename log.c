@@ -12,7 +12,7 @@
 #include <byteswap.h>
 #include "proto.h"
 #include "utils.h"
-#include "my_defs.h"
+#include "globdefs.h"
 #include "sender.h"
 
 

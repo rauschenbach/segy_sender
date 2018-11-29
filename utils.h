@@ -1,7 +1,7 @@
 #ifndef _UTILS_H
 #define _UTILS_H
 
-#include "my_defs.h"
+#include "globdefs.h"
 
 /* utils.c */
 u16 test_crc16(u8 *mes, int);

@@ -2,7 +2,7 @@
 #include "mythreads.h"
 #include "start.h"
 #include "proto.h"
-#include "my_defs.h"
+#include "globdefs.h"
 #include "sender.h"
 
 

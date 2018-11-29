@@ -1,7 +1,7 @@
 #ifndef		_SINTAB_H
 #define 	_SINTAB_H
 
-#include "my_defs.h"
+#include "globdefs.h"
 
 #define 	SIN_TABLE_SIZE			4000
 

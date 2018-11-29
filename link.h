@@ -1,7 +1,7 @@
 #ifndef _LINK_H
 #define _LINK_H
 
-#include "my_defs.h"
+#include "globdefs.h"
 
 
 void send_raw_data(ADS1282_PACK_STRUCT*);

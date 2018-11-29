@@ -18,7 +18,6 @@
 #include "nmea.h"
 #include "sender.h"
 #include "log.h"
-#include "rtc.h"
 #include "link.h"
 
 
@@ -100,10 +99,9 @@ int prepare_start_dev(void *par)
 	data_count_struct.adc_freq = start->freq;
 	data_count_struct.num_pack = 0;
 
-	/* Как часто писать минутный заголовок. В одном пакете NUM_ADC_PACK измерений */
+	/* Как часто писать минутный заголовок. В одном пакете 100 измерений */
 	data_count_struct.pack_in_min = data_count_struct.adc_freq * 60 / NUM_ADS1282_PACK;
-	log_write_log_file("freq: %d, %d packs per minute\n", data_count_struct.adc_freq, 
-                                                              data_count_struct.pack_in_min);
+	log_write_log_file("freq: %d, %d packs per minute\n", data_count_struct.adc_freq, data_count_struct.pack_in_min);
 
 
 	/* Каждые 4 часа будет приходить сигнал на создание файла */
@@ -123,8 +121,7 @@ int prepare_start_dev(void *par)
 	    break;
 	}
 
-	log_write_log_file("SUCCESS: alloc 2 x %lld bytes\n", 
-			(long long) (data_count_struct.pack_in_min * sizeof(ADS1282_PACK_STRUCT)));
+	log_write_log_file("SUCCESS: alloc 2 x %lld bytes\n", (long long) (data_count_struct.pack_in_min * sizeof(ADS1282_PACK_STRUCT)));
 	log_close_data_file();
 
 	log_create_adc_header(start, &status);
@@ -190,12 +187,10 @@ static void *read_port_thread_func(void *par)
     while (!is_end_thread()) {
 
 	/* Ставим время NMEA раз в секунду */
-#if defined TEST_NMEA_TIME
-	rtc_get_param(&rtc);
-#else
 	nmea_get_param(&rtc);
-#endif
+
 	t0 = rtc.time;
+
 
 	/* Читаем статус раз в секунду меняем заголовок */
 	if (t0 != t1) {
@@ -266,7 +261,7 @@ static void *read_port_thread_func(void *par)
     pthread_exit(EXIT_SUCCESS);
 }
 
-/* Разобрать пакет данных. data - будет NUM_ADC_PACK измерений всех каналов! */
+/* Разобрать пакет данных. data - будет 100 измерений всех каналов! */
 static void parse_adc_pack(ADS1282_PACK_STRUCT * pack, u8 * data)
 {
     int i, shift = 0;
@@ -330,7 +325,12 @@ static void sig_write_data_handler(int signo)
 	    log_write_adc_header_to_file(ns);
 
 	    sec_to_str(pack.sec, str);	/* Время в пакете */
+
+
 	    log_write_log_file("%s.%03d, drift: %d ns, num rec: %d, missed: %d\n", str, pack.msec % 1000, status.drift, data_count_struct.num_pack, pack.err0);
+
+
+
 	}
 
 	log_write_adc_data_to_file(data, sizeof(data));
@@ -409,12 +409,7 @@ int run_all_threads(void)
 	    log_write_log_file("ERROR: create net thread\n");
 	    break;
 	}
-#if defined TEST_NMEA_TIME
-	if (pthread_create(&read_nmea_thread, NULL, rtc_read_port_func, NULL) != 0) {
-	    log_write_log_file("ERROR: create rtc thread\n");
-	    break;
-	}
-#else
+#if 1
 	/* Создаем поток для NMEA  */
 	if (pthread_create(&read_nmea_thread, NULL, nmea_read_port_func, NULL) != 0) {
 	    log_write_log_file("ERROR: create nmea thread\n");

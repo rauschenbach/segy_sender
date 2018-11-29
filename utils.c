@@ -9,7 +9,7 @@
 #include <time.h>
 #include "utils.h"
 #include "log.h"
-#include "my_defs.h"
+#include "globdefs.h"
 
 /* Значение частоты для запуска */
 static u32 adc_freq_arr[] = { 125, 250, 500, 1000, 2000, 4000 };

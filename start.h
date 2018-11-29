@@ -1,7 +1,7 @@
 #ifndef _START_H
 #define _START_H
 
-#include "my_defs.h"
+#include "globdefs.h"
 
 /* start.c */
 bool is_end_thread(void);
